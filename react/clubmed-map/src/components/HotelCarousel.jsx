@@ -17,7 +17,7 @@ const HotelCarousel = ({ hotels, selectedHotelId, onHotelSelect, visibleCount })
   return (
     <div style={styles.carouselContainer}>
       <div style={styles.header}>
-        <h3 style={styles.title}>Hotels in Kolkata</h3>
+        <h3 style={styles.title}>ClubMed Resorts</h3>
 
         <span style={styles.count}>{visibleCount}</span>
       </div>

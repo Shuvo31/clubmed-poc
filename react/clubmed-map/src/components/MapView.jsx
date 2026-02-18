@@ -39,7 +39,7 @@ const createHotelMarker = (hotel, isSelected) => {
     }
   }
 
-  const priceDisplay = "₹" + hotel.price.toLocaleString("en-IN");
+  const priceDisplay = "€" + hotel.basePrice.toLocaleString("en-IN");
 
   const html = `
     <div style="

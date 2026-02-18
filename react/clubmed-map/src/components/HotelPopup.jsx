@@ -9,8 +9,8 @@ const HotelPopup = ({ hotel, onClose }) => {
         <button style={styles.closeButton} onClick={onClose}>
           ✕
         </button>
-        <img 
-          src={hotel.image} 
+        <img
+          src={hotel.image}
           alt={hotel.name}
           style={styles.hotelImage}
         />
@@ -18,10 +18,10 @@ const HotelPopup = ({ hotel, onClose }) => {
           <h3 style={styles.hotelName}>{hotel.name}</h3>
           <div style={styles.ratingContainer}>
             <span style={styles.rating}>★ {hotel.rating}</span>
-            <span style={styles.price}>₹{hotel.price.toLocaleString('en-IN')}</span>
+            <span style={styles.price}>€{hotel.basePrice.toLocaleString('en-IN')}</span>
           </div>
-          <p style={styles.address}>{hotel.address}</p>
-          <button style={styles.bookingButton}>
+          <p style={styles.address}>{hotel.country} • {hotel.region}</p>
+          <button style={styles.bookingButton} onClick={() => window.open(hotel.bookingUrl, '_blank')}>
             View Details
           </button>
         </div>

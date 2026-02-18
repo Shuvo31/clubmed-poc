@@ -22,7 +22,7 @@ const HotelCard = ({ hotel, isSelected, onClick, isCarousel = false }) => {
 
       <div style={contentStyle}>
         <div style={styles.priceSection}>
-          <span style={styles.price}>₹{hotel.price.toLocaleString('en-IN')}</span>
+          <span style={styles.price}>€{hotel.basePrice.toLocaleString('en-IN')}</span>
           <span style={styles.currency}>per night</span>
         </div>
 
@@ -30,10 +30,10 @@ const HotelCard = ({ hotel, isSelected, onClick, isCarousel = false }) => {
 
         <div style={styles.ratingRow}>
           <span style={styles.rating}>★ {hotel.rating}</span>
-          <span style={styles.type}>Hotel</span>
+          <span style={styles.type}>{hotel.region}</span>
         </div>
 
-        <p style={styles.address}>{hotel.address}</p>
+        <p style={styles.address}>{hotel.country}</p>
       </div>
     </div>
   );

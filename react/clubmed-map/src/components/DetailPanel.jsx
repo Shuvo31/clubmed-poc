@@ -29,26 +29,43 @@ const DetailPanel = ({ hotel, onClose }) => {
 
         <div style={styles.priceBox}>
           <span style={styles.priceLabel}>From</span>
-          <span style={styles.priceValue}>₹{hotel.price.toLocaleString('en-IN')}</span>
+          <span style={styles.priceValue}>€{hotel.basePrice.toLocaleString('en-IN')}</span>
           <span style={styles.perNight}>per night</span>
         </div>
 
         <div style={styles.section}>
           <h3 style={styles.sectionTitle}>Location</h3>
-          <p style={styles.address}>{hotel.address}</p>
+          <p style={styles.address}>{hotel.country} • {hotel.region}</p>
         </div>
 
+        {hotel.themes && hotel.themes.length > 0 && (
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Themes & Activities</h3>
+            <div style={styles.themesList}>
+              {hotel.themes.map((theme, idx) => (
+                <span key={idx} style={styles.themeBadge}>{theme}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={styles.section}>
-          <h3 style={styles.sectionTitle}>Amenities</h3>
-          <div style={styles.amenitiesList}>
-            <span style={styles.amenity}>🛏️ Rooms</span>
-            <span style={styles.amenity}>🍽️ Restaurant</span>
-            <span style={styles.amenity}>🏊 Pool</span>
-            <span style={styles.amenity}>📶 WiFi</span>
+          <h3 style={styles.sectionTitle}>Details</h3>
+          <div style={styles.detailsList}>
+            <div style={styles.detailItem}>
+              <span style={styles.detailLabel}>Minimum Stay:</span>
+              <span style={styles.detailValue}>{hotel.minNights} nights</span>
+            </div>
+            {hotel.childDiscountPct > 0 && (
+              <div style={styles.detailItem}>
+                <span style={styles.detailLabel}>Child Discount:</span>
+                <span style={styles.detailValue}>{hotel.childDiscountPct}%</span>
+              </div>
+            )}
           </div>
         </div>
 
-        <button style={styles.bookingButton}>
+        <button style={styles.bookingButton} onClick={() => window.open(hotel.bookingUrl, '_blank')}>
           View Details & Book
         </button>
       </div>
@@ -178,6 +195,41 @@ const styles = {
     fontSize: '13px',
     color: '#666',
     lineHeight: '1.6'
+  },
+  themesList: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px'
+  },
+  themeBadge: {
+    fontSize: '12px',
+    color: '#0066ff',
+    background: '#e8f0ff',
+    padding: '6px 12px',
+    borderRadius: '16px',
+    fontWeight: '500',
+    textTransform: 'capitalize',
+    border: '1px solid #0066ff'
+  },
+  detailsList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+  },
+  detailItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '13px',
+    padding: '8px 0',
+    borderBottom: '1px solid #f0f0f0'
+  },
+  detailLabel: {
+    color: '#999',
+    fontWeight: '500'
+  },
+  detailValue: {
+    color: '#1a1a1a',
+    fontWeight: '600'
   },
   amenitiesList: {
     display: 'grid',

@@ -1,39 +1,67 @@
-// Sample hotel data centered on Kolkata
+// ClubMed Villages data - Exact copy from clubmed_api.py with image
 export const hotelsData = [
   {
-    id: 1,
-    name: "Novotel Kolkata - Hotel & Residences",
-    price: 8700,
-    rating: 4.8,
-    coordinates: [88.3639, 22.5726],
-    image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop",
-    address: "Action Area 1C, New Town Rajarhat, CF Block Action Area 1, KOLKATA, India"
-  },
-  {
-    id: 2,
-    name: "Ibis Kolkata Rajarhat",
-    price: 4600,
+    id: "cm-punta-cana",
+    name: "Punta Cana",
+    country: "Dominican Republic",
+    region: "Caribbean",
+    themes: ["beach", "family", "all-inclusive", "kids-club"],
+    minNights: 3,
+    basePrice: 240,
+    childDiscountPct: 40,
     rating: 4.6,
-    coordinates: [88.3450, 22.5650],
-    image: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=400&h=300&fit=crop",
-    address: "Action Area 1, New Town, KOLKATA, India"
+    bookingUrl: "https://www.clubmed.example/book/punta-cana",
+    lat: 18.5601,
+    lng: -68.3725,
+    coordinates: [-68.3725, 18.5601],
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
   },
   {
-    id: 3,
-    name: "Taj Bengal",
-    price: 12000,
-    rating: 4.9,
-    coordinates: [88.3720, 22.5400],
-    image: "https://images.unsplash.com/photo-1638796323706-172d881ec9cb?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8dGFqJTIwaG90ZWx8ZW58MHx8MHx8fDA%3D",
-    address: "Alipore, KOLKATA, India"
+    id: "cm-kani",
+    name: "Kani",
+    country: "Maldives",
+    region: "Indian Ocean",
+    themes: ["beach", "luxury", "snorkeling", "couples"],
+    minNights: 4,
+    basePrice: 420,
+    childDiscountPct: 30,
+    rating: 4.8,
+    bookingUrl: "https://www.clubmed.example/book/kani",
+    lat: 4.2979,
+    lng: 73.5065,
+    coordinates: [73.5065, 4.2979],
+    image: "https://images.unsplash.com/photo-1514282401047-430810e26beb?w=400&h=300&fit=crop"
   },
   {
-    id: 4,
-    name: "The Westin Calcutta",
-    price: 7800,
-    rating: 4.7,
-    coordinates: [88.3550, 22.5800],
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop",
-    address: "Tangra, KOLKATA, India"
+    id: "cm-val-thorens",
+    name: "Val Thorens Sensations",
+    country: "France",
+    region: "Alps",
+    themes: ["ski", "mountains", "spa", "adults-only"],
+    minNights: 5,
+    basePrice: 310,
+    childDiscountPct: 0,
+    rating: 4.5,
+    bookingUrl: "https://www.clubmed.example/book/val-thorens",
+    lat: 45.2977,
+    lng: 6.5800,
+    coordinates: [6.5800, 45.2977],
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
+  },
+  {
+    id: "cm-la-rosiere",
+    name: "La Rosière",
+    country: "France",
+    region: "Alps",
+    themes: ["ski", "family", "kids-club"],
+    minNights: 5,
+    basePrice: 295,
+    childDiscountPct: 35,
+    rating: 4.4,
+    bookingUrl: "https://www.clubmed.example/book/la-rosiere",
+    lat: 45.6270,
+    lng: 6.8500,
+    coordinates: [6.8500, 45.6270],
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
   }
 ];

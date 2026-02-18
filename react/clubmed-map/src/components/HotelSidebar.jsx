@@ -11,10 +11,10 @@ const HotelSidebar = ({
     <div style={styles.sidebar}>
       <div style={styles.header}>
         <div style={styles.headerTop}>
-          <h2 style={styles.title}>Hotels</h2>
+          <h2 style={styles.title}>Resorts</h2>
           <span style={styles.count}>{visibleCount}</span>
         </div>
-        <p style={styles.subtitle}>in Kolkata</p>
+        <p style={styles.subtitle}>ClubMed Villages</p>
       </div>
 
       <div style={styles.listContainer}>
