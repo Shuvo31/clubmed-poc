@@ -11,24 +11,22 @@ API_BASE_URL = os.getenv("CLUBMED_API_BASE_URL", "http://127.0.0.1:8080")
 TIMEOUT_S = float(os.getenv("CLUBMED_API_TIMEOUT_S", "10"))
 
 mcp = FastMCP(
-    name="ClubMed MCP (REST + Maps Mock)",
+    name="ClubMed MCP (REST-backed, UI-shaped)",
     instructions=(
-        "MCP server that calls an external REST API for village search, quotes, and map-ready results "
-        "(markers/GeoJSON/nearby). Data is mock/static for now."
+        "MCP tools backed by ClubMed mock REST API. Returns hotel/village data in the same shape "
+        "as the React components expect (basePrice, minNights, bookingUrl, coordinates, image)."
     ),
 )
 
 def _client() -> httpx.Client:
     return httpx.Client(base_url=API_BASE_URL, timeout=TIMEOUT_S)
 
-
-@mcp.tool()
-def search_villages(
+def _clean_params(
     query: str = "",
     country: Optional[str] = None,
     region: Optional[str] = None,
     themes: Optional[List[str]] = None,
-    limit: int = 10,
+    limit: int = 100,
 ) -> Dict[str, Any]:
     params: Dict[str, Any] = {"q": query or "", "limit": limit}
     if country:
@@ -37,23 +35,64 @@ def search_villages(
         params["region"] = region
     if themes:
         params["themes"] = themes
+    return params
 
+
+@mcp.tool()
+def list_hotels(
+    query: str = "",
+    country: Optional[str] = None,
+    region: Optional[str] = None,
+    themes: Optional[List[str]] = None,
+    limit: int = 100,
+) -> Dict[str, Any]:
+    """Get hotels/villages in React-friendly shape."""
+    params = _clean_params(query, country, region, themes, limit)
     with _client() as c:
-        r = c.get("/villages", params=params)
+        r = c.get("/hotels", params=params)
+        r.raise_for_status()
+        return r.json()
+
+
+@mcp.tool()
+def get_hotel(hotel_id: str) -> Dict[str, Any]:
+    """Fetch a single hotel/village by id."""
+    with _client() as c:
+        r = c.get(f"/hotels/{hotel_id}")
+        r.raise_for_status()
+        return r.json()
+
+
+@mcp.tool()
+def map_search(
+    query: str = "",
+    country: Optional[str] = None,
+    region: Optional[str] = None,
+    themes: Optional[List[str]] = None,
+    limit: int = 100,
+) -> Dict[str, Any]:
+    """
+    Returns bounds + hotels array.
+    bounds shape matches React: {minX,maxX,minY,maxY} where X=lng and Y=lat.
+    """
+    params = _clean_params(query, country, region, themes, limit)
+    with _client() as c:
+        r = c.get("/map/search", params=params)
         r.raise_for_status()
         return r.json()
 
 
 @mcp.tool()
 def get_quote(
-    village_id: str,
+    hotel_id: str,
     check_in: str,
     check_out: str,
     adults: int,
     children: int = 0,
 ) -> Dict[str, Any]:
+    """Quote tool (uses /quote)."""
     payload = {
-        "village_id": village_id,
+        "hotel_id": hotel_id,
         "check_in": check_in,
         "check_out": check_out,
         "adults": adults,
@@ -65,93 +104,23 @@ def get_quote(
         return r.json()
 
 
-# ----------------------------
-# NEW: Map tools
-# ----------------------------
-@mcp.tool()
-def get_map_markers(
-    query: str = "",
-    country: Optional[str] = None,
-    region: Optional[str] = None,
-    themes: Optional[List[str]] = None,
-    limit: int = 100,
-) -> Dict[str, Any]:
-    """
-    Returns marker list + bounds for rendering on a map UI.
-    """
-    params: Dict[str, Any] = {"q": query or "", "limit": limit}
-    if country:
-        params["country"] = country
-    if region:
-        params["region"] = region
-    if themes:
-        params["themes"] = themes
-
-    with _client() as c:
-        r = c.get("/map/markers", params=params)
-        r.raise_for_status()
-        return r.json()
-
-
-@mcp.tool()
-def get_map_geojson(
-    query: str = "",
-    country: Optional[str] = None,
-    region: Optional[str] = None,
-    themes: Optional[List[str]] = None,
-    limit: int = 100,
-) -> Dict[str, Any]:
-    """
-    Returns GeoJSON FeatureCollection (Points) for map layers.
-    """
-    params: Dict[str, Any] = {"q": query or "", "limit": limit}
-    if country:
-        params["country"] = country
-    if region:
-        params["region"] = region
-    if themes:
-        params["themes"] = themes
-
-    with _client() as c:
-        r = c.get("/map/geojson", params=params)
-        r.raise_for_status()
-        return r.json()
-
-
-@mcp.tool()
-def nearby_villages(
-    lat: float,
-    lng: float,
-    radius_km: float = 50,
-    limit: int = 10,
-) -> Dict[str, Any]:
-    """
-    Returns villages within radius_km of a point (lat/lng).
-    """
-    params = {"lat": lat, "lng": lng, "radius_km": radius_km, "limit": limit}
-    with _client() as c:
-        r = c.get("/map/nearby", params=params)
-        r.raise_for_status()
-        return r.json()
-
-
-# Optional connector-style fetch/search still ok to keep
+# Optional: connector-style search/fetch (nice for generic browsing flows)
 @mcp.tool()
 def search(query: str) -> Dict[str, Any]:
     with _client() as c:
-        r = c.get("/villages", params={"q": query, "limit": 10})
+        r = c.get("/hotels", params={"q": query, "limit": 10})
         r.raise_for_status()
         data = r.json()
 
     results = []
-    for v in data.get("villages", []):
+    for h in data.get("hotels", []):
         results.append(
             {
-                "id": v["id"],
-                "title": f'{v["name"]} ({v["country"]})',
-                "snippet": f'Region: {v["region"]}. Themes: {", ".join(v.get("themes", []))}. Rating: {v.get("rating")}',
-                "url": v.get("booking_url"),
-                "metadata": {"type": "village"},
+                "id": h["id"],
+                "title": f'{h["name"]} ({h["country"]})',
+                "snippet": f'Region: {h["region"]}. Themes: {", ".join(h.get("themes", []))}. Rating: {h.get("rating")}',
+                "url": h.get("bookingUrl"),
+                "metadata": {"type": "hotel"},
             }
         )
     return {"results": results}
@@ -160,7 +129,7 @@ def search(query: str) -> Dict[str, Any]:
 @mcp.tool()
 def fetch(id: str) -> Dict[str, Any]:
     with _client() as c:
-        r = c.get(f"/villages/{id}")
+        r = c.get(f"/hotels/{id}")
         if r.status_code == 404:
             payload = {"ok": False, "reason": f"Unknown id: {id}"}
         else:
@@ -171,4 +140,5 @@ def fetch(id: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
+    # Keep SSE if that’s how you're running it; otherwise remove transport arg for stdio
     mcp.run(transport="sse")

@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1"
+    />
+    <title>ClubMed Map</title>
+
+    <!-- Leaflet (CDN) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+      defer
+    ></script>
+
+    <style>
+      :root {
+        --bg: #0b1220;
+        --panel: #0f1a2b;
+        --text: #e7eefc;
+        --muted: rgba(231, 238, 252, 0.65);
+        --border: rgba(231, 238, 252, 0.15);
+        --chip: rgba(0, 0, 0, 0.35);
+        --accent: #77a7ff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial;
+      }
+
+      /* App frame */
+      .app {
+        width: 100%;
+        height: 560px; /* IMPORTANT: fixed height to avoid 0px iframe sizing */
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #0b1220 0%, #070c15 100%);
+      }
+
+      /* Top bar */
+      .topbar {
+        padding: 12px;
+        background: rgba(15, 26, 43, 0.75);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .brand {
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+      }
+
+      .input {
+        flex: 1;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        height: 38px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+        padding: 0 12px;
+        outline: none;
+      }
+
+      button {
+        height: 38px;
+        padding: 0 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        cursor: pointer;
+      }
+      button:hover {
+        background: rgba(255, 255, 255, 0.10);
+      }
+
+      /* Map area */
+      .main {
+        position: relative;
+        min-height: 360px; /* IMPORTANT: map must have height */
+      }
+
+      #map {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: #0a0f1a;
+      }
+
+      /* Bottom list/cards */
+      .bottom {
+        border-top: 1px solid var(--border);
+        background: rgba(15, 26, 43, 0.65);
+        padding: 10px 12px;
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+      }
+
+      .card {
+        min-width: 320px;
+        max-width: 360px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.04);
+        display: grid;
+        grid-template-columns: 108px 1fr;
+        gap: 10px;
+      }
+
+      .card img {
+        width: 108px;
+        height: 96px;
+        object-fit: cover;
+        background: #111;
+      }
+
+      .card .meta {
+        padding: 10px 10px 10px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .title {
+        font-weight: 700;
+        font-size: 14px;
+        line-height: 1.2;
+      }
+
+      .sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 6px;
+      }
+
+      .chip {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--chip);
+      }
+
+      a.link {
+        font-size: 12px;
+        color: var(--accent);
+        text-decoration: none;
+      }
+
+      /* Overlay message */
+      .hint {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.35);
+        color: var(--muted);
+        font-size: 12px;
+        z-index: 500;
+        backdrop-filter: blur(6px);
+      }
+
+      /* Debug console (very important for ChatGPT iframe) */
+      #debug {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        z-index: 1000;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(0, 0, 0, 0.65);
+        color: #fff;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 12px;
+        max-height: 120px;
+        overflow: auto;
+        display: none;
+        white-space: pre-wrap;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <div class="brand">clubme</div>
+        <div class="input">
+          <input id="q" type="text" value="beach" placeholder="beach, ski, maldives..." />
+          <button id="btnSearch">Search</button>
+          <button id="btnDemo">Demo</button>
+        </div>
+      </div>
+
+      <div class="main">
+        <div id="map"></div>
+        <div id="hint" class="hint">
+          Type a query and click Search — or ask ChatGPT “show resorts on a map”.
+        </div>
+        <div id="debug"></div>
+      </div>
+
+      <div id="cards" class="bottom"></div>
+    </div>
+
+    <script>
+      // ---------- Debug helpers ----------
+      const debugEl = document.getElementById("debug");
+      function dbg(msg) {
+        debugEl.style.display = "block";
+        debugEl.textContent += msg + "\n";
+        debugEl.scrollTop = debugEl.scrollHeight;
+      }
+      window.addEventListener("error", (e) => dbg("ERR: " + (e.message || e)));
+      window.addEventListener("unhandledrejection", (e) =>
+        dbg("REJ: " + (e.reason?.message || e.reason))
+      );
+
+      const hintEl = document.getElementById("hint");
+      const cardsEl = document.getElementById("cards");
+
+      // ---------- Leaflet state ----------
+      let map = null;
+      let markersLayer = null;
+
+      function fixLeafletSize() {
+        if (!map) return;
+        // iframe environments often need multiple invalidations
+        setTimeout(() => { try { map.invalidateSize(true); } catch {} }, 50);
+        setTimeout(() => { try { map.invalidateSize(true); } catch {} }, 250);
+        setTimeout(() => { try { map.invalidateSize(true); } catch {} }, 800);
+      }
+
+      function initMapIfPossible() {
+        if (map) return true;
+        if (!window.L) {
+          dbg("Leaflet (window.L) not available yet.");
+          return false;
+        }
+
+        const el = document.getElementById("map");
+        map = L.map(el, {
+          zoomControl: true,
+          preferCanvas: true,
+          attributionControl: false,
+        }).setView([20, 0], 2);
+
+        // Tile layer
+        // (CARTO / OSM usually works; if tiles blocked you’ll see blank background)
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+          maxZoom: 19,
+        }).addTo(map);
+
+        markersLayer = L.layerGroup().addTo(map);
+
+        // ResizeObserver = key for ChatGPT embeds
+        const ro = new ResizeObserver(() => fixLeafletSize());
+        ro.observe(el);
+
+        dbg("Leaflet map initialized.");
+        fixLeafletSize();
+        return true;
+      }
+
+      function clearMarkers() {
+        if (markersLayer) markersLayer.clearLayers();
+      }
+
+      function setBoundsFromApi(bounds) {
+        // bounds shape: {minX,maxX,minY,maxY} where X=lng, Y=lat
+        if (!map || !bounds) return;
+        const southWest = [bounds.minY, bounds.minX];
+        const northEast = [bounds.maxY, bounds.maxX];
+        map.fitBounds([southWest, northEast], { padding: [24, 24] });
+        fixLeafletSize();
+      }
+
+      function renderCards(hotels) {
+        cardsEl.innerHTML = "";
+        (hotels || []).forEach((h) => {
+          const img = h.image || h.imageUrl || "";
+          const price = h.basePrice ?? h.price ?? null;
+          const nights = h.minNights ?? h.min_nights ?? null;
+
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <img alt="" src="${img || "data:image/gif;base64,R0lGODlhAQABAAAAACw="}" />
+            <div class="meta">
+              <div class="title">${escapeHtml(h.name || h.title || "Resort")}</div>
+              <div class="sub">${escapeHtml((h.region || "") + (h.country ? " • " + h.country : ""))}</div>
+              <div class="sub">${escapeHtml((h.themes || []).join(", "))}</div>
+              <div class="row">
+                ${price != null ? `<span class="chip">From €${escapeHtml(String(price))}</span>` : ""}
+                ${nights != null ? `<span class="chip">${escapeHtml(String(nights))} nights</span>` : ""}
+                ${h.bookingUrl ? `<a class="link" href="${h.bookingUrl}" target="_blank" rel="noreferrer">Book</a>` : ""}
+              </div>
+            </div>
+          `;
+          card.addEventListener("click", () => {
+            const lat = getLat(h), lng = getLng(h);
+            if (map && lat != null && lng != null) {
+              map.setView([lat, lng], Math.max(map.getZoom(), 6));
+              fixLeafletSize();
+            }
+          });
+          cardsEl.appendChild(card);
+        });
+      }
+
+      function renderMarkers(hotels) {
+        if (!map) return;
+        clearMarkers();
+
+        (hotels || []).forEach((h) => {
+          const lat = getLat(h);
+          const lng = getLng(h);
+          if (lat == null || lng == null) return;
+
+          const price = h.basePrice ?? h.price ?? "";
+          const label = price ? `€${price}` : (h.name || "Resort");
+
+          const marker = L.marker([lat, lng], { riseOnHover: true });
+          marker.bindPopup(`
+            <div style="min-width:220px">
+              <div style="font-weight:700;margin-bottom:4px">${escapeHtml(h.name || "Resort")}</div>
+              <div style="font-size:12px;opacity:.8">${escapeHtml(h.region || "")}${h.country ? " • " + escapeHtml(h.country) : ""}</div>
+              <div style="font-size:12px;opacity:.8;margin-top:4px">${escapeHtml((h.themes || []).join(", "))}</div>
+              <div style="margin-top:8px;font-size:12px">
+                ${price ? `<span style="padding:3px 6px;border:1px solid rgba(255,255,255,.2);border-radius:999px">From €${escapeHtml(String(price))}</span>` : ""}
+                ${h.bookingUrl ? `<a style="margin-left:8px" href="${h.bookingUrl}" target="_blank" rel="noreferrer">Book</a>` : ""}
+              </div>
+            </div>
+          `);
+
+          marker.addTo(markersLayer);
+        });
+
+        fixLeafletSize();
+      }
+
+      function renderFromStructuredContent(sc) {
+        const hotels = sc?.hotels || sc?.results?.hotels || [];
+        const bounds = sc?.bounds || null;
+
+        if (!hotels.length) {
+          hintEl.textContent = "No resorts found for that query.";
+        } else {
+          hintEl.textContent = `Showing ${hotels.length} resorts. Tap a pin or card for details.`;
+        }
+
+        // init map if possible; still render cards even if map fails
+        const ok = initMapIfPossible();
+        renderCards(hotels);
+
+        if (ok) {
+          renderMarkers(hotels);
+          if (bounds) setBoundsFromApi(bounds);
+          // If no bounds, try to fit markers
+          else if (hotels.length) {
+            const pts = hotels
+              .map((h) => [getLat(h), getLng(h)])
+              .filter((p) => p[0] != null && p[1] != null);
+            if (pts.length) {
+              map.fitBounds(pts, { padding: [24, 24] });
+              fixLeafletSize();
+            }
+          }
+        } else {
+          dbg("Map not initialized (Leaflet missing). Showing cards only.");
+        }
+      }
+
+      // ---------- ChatGPT UI message listener ----------
+      // ChatGPT Apps send tool results via window.postMessage. We handle multiple shapes safely.
+      function tryParse(data) {
+        if (typeof data === "string") {
+          try { return JSON.parse(data); } catch { return null; }
+        }
+        if (typeof data === "object" && data) return data;
+        return null;
+      }
+
+      window.addEventListener("message", (event) => {
+        const msg = tryParse(event.data);
+        if (!msg) return;
+
+        // Common Apps SDK notification: { method: "ui/notifications/tool-result", params: { structuredContent } }
+        if (msg.method === "ui/notifications/tool-result") {
+          const sc = msg.params?.structuredContent;
+          dbg("Got tool-result (ui/notifications/tool-result).");
+          renderFromStructuredContent(sc);
+          return;
+        }
+
+        // Some builds send: { type: "tool-result", structuredContent: ... }
+        if (msg.type === "tool-result" && msg.structuredContent) {
+          dbg("Got tool-result (type=tool-result).");
+          renderFromStructuredContent(msg.structuredContent);
+          return;
+        }
+
+        // Some send: { toolName, result: { structuredContent } }
+        if (msg.toolName && msg.result?.structuredContent) {
+          dbg("Got tool-result (toolName/result).");
+          renderFromStructuredContent(msg.result.structuredContent);
+          return;
+        }
+      });
+
+      // ---------- Tool call helpers ----------
+      // This is best-effort. In ChatGPT, the model usually calls the tool.
+      // But these buttons help you test when embedded.
+      function callTool(name, args) {
+        const payloads = [
+          // common JSON-RPC style
+          { jsonrpc: "2.0", id: String(Date.now()), method: "ui/commands/tool-call", params: { name, arguments: args } },
+          // fallback style
+          { type: "tool-call", name, arguments: args },
+        ];
+
+        dbg(`Sending tool-call: ${name} ${JSON.stringify(args)}`);
+        payloads.forEach((p) => {
+          try { window.parent?.postMessage(p, "*"); } catch {}
+          try { window.top?.postMessage(p, "*"); } catch {}
+        });
+      }
+
+      document.getElementById("btnSearch").addEventListener("click", () => {
+        const q = document.getElementById("q").value.trim();
+        hintEl.textContent = "Searching...";
+        callTool("map_search", { query: q || "beach" });
+      });
+
+      document.getElementById("btnDemo").addEventListener("click", () => {
+        hintEl.textContent = "Loading demo...";
+        callTool("ui_demo_load", { preset: "beach" });
+      });
+
+      // ---------- Utility ----------
+      function getLat(h) {
+        if (typeof h.lat === "number") return h.lat;
+        if (h.coordinates && typeof h.coordinates.lat === "number") return h.coordinates.lat;
+        if (Array.isArray(h.coordinates) && typeof h.coordinates[1] === "number") return h.coordinates[1];
+        return null;
+      }
+      function getLng(h) {
+        if (typeof h.lng === "number") return h.lng;
+        if (h.coordinates && typeof h.coordinates.lng === "number") return h.coordinates.lng;
+        if (Array.isArray(h.coordinates) && typeof h.coordinates[0] === "number") return h.coordinates[0];
+        return null;
+      }
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      // Try init when Leaflet finishes loading
+      // (leaflet script is defer, so this runs after parse)
+      setTimeout(() => {
+        if (window.L) initMapIfPossible();
+        else dbg("Waiting for Leaflet to load...");
+      }, 0);
+
+      // If Leaflet loads later, attempt again
+      const leafletPoll = setInterval(() => {
+        if (window.L) {
+          clearInterval(leafletPoll);
+          initMapIfPossible();
+        }
+      }, 200);
+      setTimeout(() => clearInterval(leafletPoll), 5000);
+    </script>
+  </body>
+</html>
