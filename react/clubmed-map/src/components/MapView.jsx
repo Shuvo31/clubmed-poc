@@ -41,47 +41,63 @@ const createHotelMarker = (hotel, isSelected) => {
   const html = `
     <div style="
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      width: 110px;
-      height: 56px;
-      background: linear-gradient(135deg, ${brand.color} 0%, ${brand.color} 100%);
-      border: ${isSelected ? '3px solid #ffffff' : '2px solid #ffffff'};
-      border-radius: 28px;
-      box-shadow: ${isSelected ? '0 12px 32px rgba(0, 0, 0, 0.45)' : '0 8px 20px rgba(0, 0, 0, 0.35)'};
-      transform: scale(${isSelected ? 1.12 : 1}) ${isSelected ? 'translateY(-3px)' : ''};
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      cursor: pointer;
-      font-weight: 800;
-      color: #ffffff;
-      text-align: center;
-      padding: 0 12px;
-      gap: 6px;
-      flex-direction: row;
+      justify-content: flex-start;
     ">
-      <span style="
-        font-size: 10px;
-        letter-spacing: 0.8px;
-        opacity: 0.95;
-        text-transform: uppercase;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-        font-weight: 700;
-        line-height: 1;
-        flex-shrink: 0;
-      ">${brand.label}</span>
-      <span style="
-        font-size: 16px;
-        font-weight: 900;
-        line-height: 1.1;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        letter-spacing: -0.3px;
-        flex-shrink: 0;
-      ">${priceDisplay}</span>
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 110px;
+        height: 56px;
+        background: linear-gradient(135deg, ${brand.color} 0%, ${brand.color} 100%);
+        border: ${isSelected ? '3px solid #ffffff' : '2px solid #ffffff'};
+        border-radius: 28px;
+        box-shadow: ${isSelected ? '0 12px 32px rgba(0, 0, 0, 0.45)' : '0 8px 20px rgba(0, 0, 0, 0.35)'};
+        transform: scale(${isSelected ? 1.12 : 1}) ${isSelected ? 'translateY(-3px)' : ''};
+        transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        cursor: pointer;
+        font-weight: 800;
+        color: #ffffff;
+        text-align: center;
+        padding: 0 12px;
+        gap: 6px;
+        flex-direction: row;
+      ">
+        <span style="
+          font-size: 10px;
+          letter-spacing: 0.8px;
+          opacity: 0.95;
+          text-transform: uppercase;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+          font-weight: 700;
+          line-height: 1;
+          flex-shrink: 0;
+        ">${brand.label}</span>
+        <span style="
+          font-size: 16px;
+          font-weight: 900;
+          line-height: 1.1;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          letter-spacing: -0.3px;
+          flex-shrink: 0;
+        ">${priceDisplay}</span>
+      </div>
+      <div style="
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 12px solid ${brand.color};
+        margin-top: -2px;
+        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
+      "></div>
     </div>
   `;
   return L.divIcon({
     html: html,
-    iconSize: [110, 56],
+    iconSize: [110, 74],
     className: 'hotel-marker',
   });
 };
