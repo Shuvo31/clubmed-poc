@@ -24,7 +24,7 @@ export const hotelsData = [
     price: 12000,
     rating: 4.9,
     coordinates: [88.3720, 22.5400],
-    image: "https://images.unsplash.com/photo-1578500494198-246f612d03b3?w=400&h=300&fit=crop",
+    image: "https://images.unsplash.com/photo-1638796323706-172d881ec9cb?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8dGFqJTIwaG90ZWx8ZW58MHx8MHx8fDA%3D",
     address: "Alipore, KOLKATA, India"
   },
   {

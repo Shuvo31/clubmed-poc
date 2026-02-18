@@ -64,22 +64,18 @@ const HotelCarousel = ({ hotels, selectedHotelId, onHotelSelect, visibleCount })
 
 const styles = {
   carouselContainer: {
-    position: 'relative',
-    background: 'rgba(255, 255, 255, 0.98)',
-    backdropFilter: 'blur(10px)',
-    borderTop: '1px solid #e0e0e0',
+    position: 'fixed',
+    bottom: '0',
+    width: '100%',
     padding: '16px 12px 12px 12px',
     zIndex: 100,
-    boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.12)',
     animation: 'slideUp 0.4s ease-out',
-    maxHeight: '280px',
     display: 'flex',
     flexDirection: 'column',
-    flexShrink: 0
   },
   header: {
     display: 'flex',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '12px',
     paddingLeft: '8px',
@@ -90,11 +86,12 @@ const styles = {
     margin: 0,
     fontSize: '14px',
     fontWeight: '600',
-    color: '#1a1a1a'
+    background: 'rgba(0, 0, 0, 0.05)',
+    padding: '4px 8px',
+    borderRadius: '12px'
   },
   count: {
     fontSize: '12px',
-    color: '#666',
     background: '#e8e8e8',
     padding: '4px 8px',
     borderRadius: '12px',
@@ -111,8 +108,6 @@ const styles = {
     flex: 1,
     display: 'flex',
     gap: '12px',
-    overflowX: 'auto',
-    overflowY: 'hidden',
     scrollBehavior: 'smooth',
     paddingRight: '8px',
     minHeight: 0
@@ -130,12 +125,11 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     transition: 'all 0.2s ease',
-    color: '#666'
   },
   cardWrapper: {
     flexShrink: 0,
     width: '280px',
-    height: '220px'
+    // height: '220px'
   },
   emptyState: {
     width: '100%',

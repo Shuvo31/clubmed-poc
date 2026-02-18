@@ -43,42 +43,35 @@ const styles = {
   card: {
     display: 'flex',
     flexDirection: 'row',
-    background: '#ffffff',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    cursor: 'pointer',
     marginBottom: '10px',
-    border: '1px solid #e8e8e8',
+    borderRadius: '20px',
+    cursor: 'pointer',
     transition: 'all 0.2s ease',
     boxShadow: '0 1px 4px rgba(0, 0, 0, 0.08)',
-    height: '110px'
   },
   cardSelected: {
-    borderColor: '#0066ff',
+    border: '1px solid #0066ff',
     boxShadow: '0 4px 16px rgba(0, 102, 255, 0.15)',
-    background: '#f0f6ff'
   },
   carouselCard: {
     display: 'flex',
-    flexDirection: 'column',
-    background: '#ffffff',
-    borderRadius: '10px',
-    overflow: 'hidden',
+    flexDirection: 'row',
+    borderRadius: '20px',
+    backgroundColor:'rgba(255, 255, 255, 0.8)',
     cursor: 'pointer',
-    border: '2px solid #e0e0e0',
+    marginTop: '10px',
     transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-    height: '100%'
   },
   carouselCardSelected: {
-    borderColor: '#0066ff',
+    border: '2px solid #0066ff',
     boxShadow: '0 8px 24px rgba(0, 102, 255, 0.25)',
-    background: '#f8faff',
     transform: 'translateY(-4px)'
   },
   imageWrapper: {
     width: '110px',
     height: '110px',
+    borderRadius: '20px',
     flexShrink: 0,
     overflow: 'hidden',
     background: '#e0e0e0'
