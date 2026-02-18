@@ -1,0 +1,38 @@
+HOTEL DISCOVERY MAP - SETUP INSTRUCTIONS
+=========================================
+
+NO TOKEN REQUIRED! Uses free OpenStreetMap
+
+1. INSTALL DEPENDENCIES:
+   npm install
+
+2. START DEVELOPMENT SERVER:
+   npm run dev
+
+3. OPEN IN BROWSER:
+   http://localhost:5173
+
+That's it! Everything works immediately. No token needed.
+
+4. BUILD FOR PRODUCTION:
+   npm run build
+
+FEATURES:
+- Interactive OpenStreetMap (free, no token needed)
+- Hotel markers with prices
+- Synchronized sidebar list
+- Dynamic filtering
+- Smooth animations
+- Popup cards
+- Performance optimized
+
+FILES:
+- src/App.jsx - Main app
+- src/components/ - React components (MapView, HotelSidebar, HotelCard, HotelPopup)
+- src/hooks/useMapHotels.js - Custom hooks
+- src/data/hotels.js - Sample hotels data (12 hotels in Kolkata)
+- src/styles/App.css - Global styles
+
+COMPLETELY READY TO RUN!
+Just run npm install && npm run dev
+
