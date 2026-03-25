@@ -1,4 +1,4 @@
-export const CLUBMED_LOCATIONS = [
+export const CLUBMED_LOCATIONS_DUMMY = [
   {
     id: 1, lat: 46.08, lng: 6.72, title: 'Grand Massif Samoëns Morillon', titleSuffix: 'Winter', tag: 'Winter', location: 'France', oldPrice: '$6,000', newPrice: '$5,568', img: 'https://images.unsplash.com/photo-1723478918463-21e398b616d8?q=80&w=400&h=300&fit=crop',
     desc: 'Find yourself immersed in the snowy landscape of France.',
@@ -116,3 +116,33 @@ export const CLUBMED_LOCATIONS = [
     images: ['https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=400&h=300&fit=crop','https://images.unsplash.com/photo-1618218168350-6e7c81151b64?q=80&w=400&h=300&fit=crop','https://images.unsplash.com/photo-1540553016722-983e48a2cd10?q=80&w=400&h=300&fit=crop','https://images.unsplash.com/photo-1550236520-7050f3582da0?q=80&w=400&h=300&fit=crop']
   }
 ];
+
+function mapPythonDataToReact(pythonData) {
+  return pythonData.map((v, idx) => ({
+    id: v.id || idx,
+    lat: v.lat,
+    lng: v.lng,
+    title: v.n || 'Resort',
+    titleSuffix: v.co || '',
+    tag: (v.ss && v.ss.length > 0) ? (v.ss.includes('WINTER') ? 'Winter' : 'Summer') : '',
+    location: (v.ar && v.co) ? v.ar + ' · ' + v.co : (v.co || v.ar || ''),
+    oldPrice: v.ip ? '€' + v.ip : null,
+    newPrice: v.bp ? '€' + v.bp : (v.ip ? '€' + v.ip : 'N/A'),
+    img: v.img || 'https://images.unsplash.com/photo-1540553016722-983e48a2cd10?q=80&w=400&h=300&fit=crop',
+    desc: v.dt || v.ad || 'Discover this beautiful Club Med resort.',
+    reasonTitle: v.dt ? v.dt : 'The best reasons to go',
+    reasonDesc: v.ad || 'Experience the vacation of a lifetime.',
+    accommodationDesc: v.ad || 'Find your ideal hideaway with a choice of rooms tailored to your needs.',
+    activitiesDesc: 'Discover the many included and on demand activities available through this page.',
+    images: v.si && v.si.length > 0 ? v.si : [
+      'https://images.unsplash.com/photo-1540553016722-983e48a2cd10?q=80&w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1618218168350-6e7c81151b64?q=80&w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1550236520-7050f3582da0?q=80&w=400&h=300&fit=crop',
+      'https://images.unsplash.com/photo-1563298723-dcfebaa392e3?q=80&w=400&h=300&fit=crop'
+    ],
+    exclusive: v.ec || false,
+    ratingText: v.cl ? v.cl + '/5' : null
+  }));
+}
+
+export const CLUBMED_LOCATIONS = typeof window !== 'undefined' && window.__CLUBMED_DATA__ ? mapPythonDataToReact(window.__CLUBMED_DATA__) : CLUBMED_LOCATIONS_DUMMY;
