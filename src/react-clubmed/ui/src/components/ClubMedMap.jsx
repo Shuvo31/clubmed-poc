@@ -48,6 +48,14 @@ export default function ClubMedMap({ locations, onSelectLocation }) {
     };
   }, []);
 
+  useEffect(() => {
+    const carousel = carouselRef.current;
+    if (carousel) {
+      carousel.addEventListener('wheel', handleWheel, { passive: false });
+      return () => carousel.removeEventListener('wheel', handleWheel);
+    }
+  }, []);
+
   const handleMouseEnter = () => {
     isHoveringRef.current = true;
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -56,6 +64,15 @@ export default function ClubMedMap({ locations, onSelectLocation }) {
   const handleMouseLeave = () => {
     isHoveringRef.current = false;
     startAutoScroll();
+  };
+
+  const handleWheel = (e) => {
+    if (carouselRef.current) {
+      // Only handle wheel when over carousel
+      e.preventDefault();
+      const scrollAmount = e.deltaY > 0 ? 100 : -100;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
   };
 
   // Helper component to smoothly center on clicked marker
@@ -98,12 +115,12 @@ export default function ClubMedMap({ locations, onSelectLocation }) {
       {/* Carousel overlay */}
       <div
         ref={carouselRef}
-        className="absolute bottom-8 w-full z-[1000] overflow-x-auto no-scrollbar pt-4 pb-4 px-6 md:px-12 pointer-events-none snap-x"
+        className="absolute bottom-8 w-full z-[1000] overflow-x-auto pt-4 pb-4 px-6 md:px-12 snap-x no-scrollbar"
         style={{ scrollBehavior: 'smooth' }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="flex gap-4 w-max pointer-events-auto items-center pb-2">
+        <div className="flex gap-4 w-max items-center pb-2">
           {locations && locations.map((loc) => (
             <ResortCard key={loc.id} loc={loc} onClick={onSelectLocation} />
           ))}

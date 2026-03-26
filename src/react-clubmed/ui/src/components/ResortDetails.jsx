@@ -1,8 +1,21 @@
-﻿import SidebarCard from "./SidebarCard";
+﻿import { useRef, useEffect } from "react";
+import SidebarCard from "./SidebarCard";
 import ResortCard from "./ResortCard";
 import ResortDetailContent from "./ResortDetailContent";
 
 function ResortDetails({ locations, location, onClose, onSelect }) {
+  const selectedCardRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedCardRef.current) {
+      selectedCardRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "start"
+      });
+    }
+  }, [location?.id]);
+
   if (!location) return null;
 
   return (
@@ -28,12 +41,16 @@ function ResortDetails({ locations, location, onClose, onSelect }) {
         {/* Sidebar: Resort List (Desktop only) */}
         <div className="w-[400px] bg-[#f3eee3] overflow-y-auto hidden lg:flex flex-col p-4 gap-4 shrink-0 rounded-[2rem]">
           {locations && locations.map((loc) => (
-            <SidebarCard
+            <div
               key={loc.id}
-              loc={loc}
-              isSelected={loc.id === location.id}
-              onClick={onSelect}
-            />
+              ref={loc.id === location.id ? selectedCardRef : null}
+            >
+              <SidebarCard
+                loc={loc}
+                isSelected={loc.id === location.id}
+                onClick={onSelect}
+              />
+            </div>
           ))}
         </div>
 
