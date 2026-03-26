@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CLUBMED_LOCATIONS } from '../data/locations';
 
 const CircleIcon = ({ half }) => (
   <svg width="13" height="13" viewBox="0 0 14 14" className="block">
@@ -13,9 +12,11 @@ const CircleIcon = ({ half }) => (
 
 const familyResortIds = [1, 2, 13]; // La Caravelle, Punta Cana, Rio Das Pedras
 
-export default function FamilyResorts({ onSelectLocation }) {
+export default function FamilyResorts({ locations, onSelectLocation }) {
   const navigate = useNavigate();
-  const resorts = CLUBMED_LOCATIONS.filter(resort => familyResortIds.includes(resort.id)).map(resort => ({
+  const resorts = useMemo(() => {
+    if (!locations) return [];
+    return locations.filter(resort => familyResortIds.includes(resort.id)).map(resort => ({
     ...resort,
     image: resort.img,
     price: resort.newPrice,
@@ -29,6 +30,7 @@ export default function FamilyResorts({ onSelectLocation }) {
     ],
     tag: resort.tag
   }));
+  }, [locations]);
 
   return (
     <div className="min-h-screen bg-white font-sans">

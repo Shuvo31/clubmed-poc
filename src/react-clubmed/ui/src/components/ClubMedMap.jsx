@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import { CLUBMED_LOCATIONS } from '../data/locations';
 import ResortCard from './ResortCard';
 
 const customIcon = new L.DivIcon({
@@ -15,7 +14,7 @@ const customIcon = new L.DivIcon({
   iconAnchor: [16, 16],
 });
 
-export default function ClubMedMap({ onSelectLocation }) {
+export default function ClubMedMap({ locations, onSelectLocation }) {
   const mapRef = useRef();
   const carouselRef = useRef();
   const intervalRef = useRef(null);
@@ -26,8 +25,7 @@ export default function ClubMedMap({ onSelectLocation }) {
 
     intervalRef.current = setInterval(() => {
       if (carouselRef.current && !isHoveringRef.current) {
-        const isMobile = window.innerWidth < 768;
-        const itemWidth = isMobile ? 336 : 456; // Mobile: 320px + 16px gap, Desktop: 440px + 16px gap
+        const itemWidth = 336;
 
         // Check if we reached the end
         if (
@@ -85,7 +83,7 @@ export default function ClubMedMap({ onSelectLocation }) {
           attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
-        {CLUBMED_LOCATIONS.map((loc) => (
+        {locations && locations.map((loc) => (
           <Marker
             key={loc.id}
             position={[loc.lat, loc.lng]}
@@ -106,7 +104,7 @@ export default function ClubMedMap({ onSelectLocation }) {
         onMouseLeave={handleMouseLeave}
       >
         <div className="flex gap-4 w-max pointer-events-auto items-center pb-2">
-          {CLUBMED_LOCATIONS.map((loc) => (
+          {locations && locations.map((loc) => (
             <ResortCard key={loc.id} loc={loc} onClick={onSelectLocation} />
           ))}
         </div>

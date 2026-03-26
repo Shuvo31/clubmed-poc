@@ -1,9 +1,8 @@
-﻿import { CLUBMED_LOCATIONS } from "../data/locations";
-import SidebarCard from "./SidebarCard";
+﻿import SidebarCard from "./SidebarCard";
 import ResortCard from "./ResortCard";
 import ResortDetailContent from "./ResortDetailContent";
 
-function ResortDetails({ location, onClose, onSelect }) {
+function ResortDetails({ locations, location, onClose, onSelect }) {
   if (!location) return null;
 
   return (
@@ -28,7 +27,7 @@ function ResortDetails({ location, onClose, onSelect }) {
 
         {/* Sidebar: Resort List (Desktop only) */}
         <div className="w-[400px] bg-[#f3eee3] overflow-y-auto hidden lg:flex flex-col p-4 gap-4 shrink-0 rounded-[2rem]">
-          {CLUBMED_LOCATIONS.map((loc) => (
+          {locations && locations.map((loc) => (
             <SidebarCard
               key={loc.id}
               loc={loc}
@@ -44,7 +43,7 @@ function ResortDetails({ location, onClose, onSelect }) {
 
           {/* Mobile Carousel / "Sidebar" Cards below content */}
           <div className="lg:hidden w-full overflow-x-auto pt-4 pb-6 px-4 snap-x flex gap-4 custom-scrollbar">
-            {CLUBMED_LOCATIONS.map((loc) => (
+            {locations && locations.map((loc) => (
               <ResortCard
                 key={loc.id}
                 loc={loc}

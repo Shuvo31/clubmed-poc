@@ -9,7 +9,7 @@ export default function SidebarCard({ loc, isSelected, onClick }) {
         isSelected ? "border-black border-[1.5px] shadow-[0_0_15px_rgba(0,0,0,0.1)]" : "border-transparent hover:border-gray-300"
       }`}
     >
-      <Image src={loc.img} alt={loc.title} className="w-24 h-24 object-cover rounded-[14px] shrink-0" />
+      {loc.img && <Image src={loc.img} alt={loc.title} className="w-24 h-24 object-cover rounded-[14px] shrink-0" />}
       <div className="ml-4 flex flex-col justify-start flex-1 py-1">
         {loc.tag ? (
           <span className="text-[10px] font-bold px-3 py-0.5 rounded-full w-max mb-1.5 border border-black text-black">

@@ -12,17 +12,19 @@ export default function ResortDetailContent({ location }) {
         <div className="flex-[1.4]">
           <div className="grid grid-cols-2 gap-3 lg:gap-4">
             {/* Top Large Image spanning full width */}
-            <div className="col-span-2">
-              <Image src={location.img} alt="Hero" className="w-full h-[250px] lg:h-[450px] object-cover rounded-[16px] lg:rounded-[24px]" />
-            </div>
+            {location.img && (
+              <div className="col-span-2">
+                <Image src={location.img} alt="Hero" className="w-full h-[250px] lg:h-[450px] object-cover rounded-[16px] lg:rounded-[24px]" />
+              </div>
+            )}
 
             {/* Row 2 */}
-            <Image src={images[0]} alt="Resort aspect 1" className="w-full h-32 lg:h-52 object-cover rounded-[16px] lg:rounded-[20px]" />
-            <Image src={images[1]} alt="Resort aspect 2" className="w-full h-32 lg:h-52 object-cover rounded-[16px] lg:rounded-[20px]" />
+            {images[0] && <Image src={images[0]} alt="Resort aspect 1" className="w-full h-32 lg:h-52 object-cover rounded-[16px] lg:rounded-[20px]" />}
+            {images[1] && <Image src={images[1]} alt="Resort aspect 2" className="w-full h-32 lg:h-52 object-cover rounded-[16px] lg:rounded-[20px]" />}
 
             {/* Row 3 (Desktop only) */}
-            <Image src={images[2]} alt="Resort aspect 3" className="hidden lg:block w-full h-48 object-cover rounded-[20px]" />
-            <Image src={images[3]} alt="Resort aspect 4" className="hidden lg:block w-full h-48 object-cover rounded-[20px]" />
+            {images[2] && <Image src={images[2]} alt="Resort aspect 3" className="hidden lg:block w-full h-48 object-cover rounded-[20px]" />}
+            {images[3] && <Image src={images[3]} alt="Resort aspect 4" className="hidden lg:block w-full h-48 object-cover rounded-[20px]" />}
           </div>
         </div>
 
@@ -32,48 +34,64 @@ export default function ResortDetailContent({ location }) {
             The ultimate Club Med<br />{location.titleSuffix || location.title} paradise
           </Heading>
 
-          <p className="text-[14px] lg:text-[15px] font-medium leading-[1.5] lg:leading-[1.6] text-black mb-4">
-            {location.desc}
-          </p>
+          {location.desc && (
+            <p className="text-[14px] lg:text-[15px] font-medium leading-[1.5] lg:leading-[1.6] text-black mb-4">
+              {location.desc}
+            </p>
+          )}
 
           <div className="text-right lg:border-b border-transparent mb-8 lg:mb-12">
             <span className="font-bold text-[13px] lg:text-sm text-black border-b-[2px] border-black cursor-pointer pb-0.5 inline-block">See more</span>
           </div>
 
-          <Heading level={2} className="text-xl lg:text-2xl font-serif font-black text-black mb-4">The best reasons to go</Heading>
+          {location.reasonTitle && (
+            <>
+              <Heading level={2} className="text-xl lg:text-2xl font-serif font-black text-black mb-4">The best reasons to go</Heading>
 
-          <div className="mb-8 lg:mb-12">
-            <Heading level={3} className="text-lg lg:text-xl font-bold text-black mb-2 lg:mb-3">{location.reasonTitle}</Heading>
-            <p className="text-[14px] lg:text-[15px] font-medium leading-[1.5] lg:leading-[1.6] text-black mb-4">
-              {location.reasonDesc}
-            </p>
-            <div className="text-right border-b border-transparent">
-              <span className="font-bold text-[13px] lg:text-sm text-black border-b-[2px] border-black cursor-pointer pb-0.5 inline-block">See more</span>
-            </div>
-          </div>
+              <div className="mb-8 lg:mb-12">
+                <Heading level={3} className="text-lg lg:text-xl font-bold text-black mb-2 lg:mb-3">{location.reasonTitle}</Heading>
+                {location.reasonDesc && (
+                  <p className="text-[14px] lg:text-[15px] font-medium leading-[1.5] lg:leading-[1.6] text-black mb-4">
+                    {location.reasonDesc}
+                  </p>
+                )}
+                <div className="text-right border-b border-transparent">
+                  <span className="font-bold text-[13px] lg:text-sm text-black border-b-[2px] border-black cursor-pointer pb-0.5 inline-block">See more</span>
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="space-y-6">
             {/* Accommodation Feature */}
-            <div className="flex gap-4 items-start">
-              <Image src={images[2]} alt="Accommodation" className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded-[16px] lg:rounded-[20px] shrink-0" />
-              <div>
-                <Heading level={3} className="font-bold text-black text-[13px] lg:text-sm mb-1">Accommodation</Heading>
-                <p className="text-[12px] lg:text-[13px] font-medium text-black leading-snug">
-                  {location.accommodationDesc || "Find your ideal hideaway with a choice of rooms tailored to your needs."}
-                </p>
+            {location.accommodationDesc && (
+              <div className="flex gap-4 items-start">
+                <div className="w-20 h-20 lg:w-24 lg:h-24 flex items-center justify-center bg-gray-100 rounded-[16px] lg:rounded-[20px] shrink-0 text-[40px] lg:text-[48px]">
+                🏨
               </div>
-            </div>
+                <div>
+                  <Heading level={3} className="font-bold text-black text-[13px] lg:text-sm mb-1">Accommodation</Heading>
+                  <p className="text-[12px] lg:text-[13px] font-medium text-black leading-snug">
+                    {location.accommodationDesc}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Activities Feature */}
-            <div className="flex gap-4 items-start">
-              <Image src={images[3]} alt="Activities" className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded-[16px] lg:rounded-[20px] shrink-0" />
-              <div>
-                <Heading level={3} className="font-bold text-black text-[13px] lg:text-sm mb-1">Activities</Heading>
-                <p className="text-[12px] lg:text-[13px] font-medium text-black leading-snug">
-                  {location.activitiesDesc || "Discover the many included and on demand activities available through this page."}
-                </p>
+            {location.activitiesDesc && (
+              <div className="flex gap-4 items-start">
+                <div className="w-20 h-20 lg:w-24 lg:h-24 flex items-center justify-center bg-gray-100 rounded-[16px] lg:rounded-[20px] shrink-0 text-[40px] lg:text-[48px]">
+                🎯
               </div>
-            </div>
+                <div>
+                  <Heading level={3} className="font-bold text-black text-[13px] lg:text-sm mb-1">Activities</Heading>
+                  <p className="text-[12px] lg:text-[13px] font-medium text-black leading-snug">
+                    {location.activitiesDesc}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
