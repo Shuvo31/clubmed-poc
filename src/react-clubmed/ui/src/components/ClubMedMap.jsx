@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -19,6 +19,51 @@ export default function ClubMedMap({ locations, onSelectLocation }) {
   const carouselRef = useRef();
   const intervalRef = useRef(null);
   const isHoveringRef = useRef(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+
+    // Leaflet needs an explicit resize when its container changes to `position: fixed`.
+    // We run it after the browser paints to ensure the new size is measurable.
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    const tryInvalidate = () => {
+      attempts += 1;
+      const leafletMap = mapRef.current;
+      if (leafletMap?.invalidateSize) {
+        leafletMap.invalidateSize();
+        return;
+      }
+      if (attempts < maxAttempts) window.setTimeout(tryInvalidate, 50);
+    };
+
+    const raf1 = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(tryInvalidate);
+    });
+
+    return () => window.cancelAnimationFrame(raf1);
+  }, [isFullscreen]);
 
   const startAutoScroll = () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -87,7 +132,20 @@ export default function ClubMedMap({ locations, onSelectLocation }) {
   }
 
   return (
-    <div className="relative w-full h-[100vh]">
+    <div
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-[2000] w-screen h-screen bg-white"
+          : "relative w-full h-[100vh]"
+      }
+    >
+      <button
+        type="button"
+        onClick={() => setIsFullscreen((v) => !v)}
+        className="absolute top-4 right-4 z-[2100] rounded-full bg-white/90 border border-black/10 px-3 py-2 text-[13px] font-extrabold hover:bg-white shadow-sm"
+      >
+        {isFullscreen ? "Exit full screen" : "Full screen"}
+      </button>
       <MapContainer
         center={[30, 0]}
         zoom={3}
