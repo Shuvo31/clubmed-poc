@@ -14,12 +14,11 @@ const customIcon = new L.DivIcon({
   iconAnchor: [16, 16],
 });
 
-export default function ClubMedMap({ locations, onSelectLocation }) {
+export default function ClubMedMap({ locations, onSelectLocation, isFullscreen, toggleFullscreen }) {
   const mapRef = useRef();
   const carouselRef = useRef();
   const intervalRef = useRef(null);
   const isHoveringRef = useRef(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
@@ -33,11 +32,7 @@ export default function ClubMedMap({ locations, onSelectLocation }) {
   }, [isFullscreen]);
 
   useEffect(() => {
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") setIsFullscreen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    // Escape logic is now handled implicitly by the browser native fullscreen API and state in App.jsx
   }, []);
 
   useEffect(() => {
@@ -141,7 +136,7 @@ export default function ClubMedMap({ locations, onSelectLocation }) {
     >
       <button
         type="button"
-        onClick={() => setIsFullscreen((v) => !v)}
+        onClick={toggleFullscreen}
         className="absolute top-4 right-4 z-[2100] rounded-full bg-white/90 border border-black/10 px-3 py-2 text-[13px] font-extrabold hover:bg-white shadow-sm"
       >
         {isFullscreen ? "Exit full screen" : "Full screen"}

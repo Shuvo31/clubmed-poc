@@ -3,9 +3,8 @@ import SidebarCard from "./SidebarCard";
 import ResortCard from "./ResortCard";
 import ResortDetailContent from "./ResortDetailContent";
 
-function ResortDetails({ locations, location, onClose, onSelect }) {
+function ResortDetails({ locations, location, onClose, onSelect, isFullscreen, toggleFullscreen }) {
   const selectedCardRef = useRef(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     if (selectedCardRef.current) {
@@ -28,11 +27,7 @@ function ResortDetails({ locations, location, onClose, onSelect }) {
   }, [isFullscreen]);
 
   useEffect(() => {
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") setIsFullscreen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    // Escape logic is now handled implicitly by the browser native fullscreen API and state in App.jsx
   }, []);
 
   if (!location) return null;
@@ -55,7 +50,7 @@ function ResortDetails({ locations, location, onClose, onSelect }) {
         </button>
         <button
           type="button"
-          onClick={() => setIsFullscreen((v) => !v)}
+          onClick={toggleFullscreen}
           className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black flex items-center justify-center hover:bg-gray-100 z-10"
           aria-label={isFullscreen ? "Exit full screen" : "Full screen"}
           title={isFullscreen ? "Exit full screen" : "Full screen"}
