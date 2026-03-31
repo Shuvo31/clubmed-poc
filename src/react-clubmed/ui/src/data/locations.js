@@ -43,46 +43,60 @@ export const CLUBMED_LOCATIONS =
     : CLUBMED_LOCATIONS_DUMMY;
 
 export function useClubMedData() {
-  const [locations, setLocations] = useState(() => {
-    if (
-      typeof window !== "undefined" &&
-      window.__CLUBMED_DATA__
-    ) {
-      return mapPythonDataToReact(window.__CLUBMED_DATA__);
+  const [data, setData] = useState(() => {
+    if (typeof window !== "undefined" && window.__CLUBMED_DATA__) {
+      return {
+        view: window.__CLUBMED_DATA__.view,
+        resort: window.__CLUBMED_DATA__.resort
+          ? mapPythonDataToReact([window.__CLUBMED_DATA__.resort])[0]
+          : null,
+        allVillages: mapPythonDataToReact(window.__CLUBMED_DATA__.allVillages || []),
+      };
     }
     return null;
   });
-  const [loading, setLoading] = useState(!locations);
+
+  const [loading, setLoading] = useState(!data);
 
   useEffect(() => {
-    if (!locations) {
-      setLoading(true);
-      fetch("http://localhost:8001/api/clubmed-data")
-        .then((res) => {
-          if (!res.ok)
-            throw new Error(
-              "Local Dev API failed to answer. Did you run local_dev_api.py?"
-            );
-          return res.json();
-        })
-        .then((pythonData) => {
-          console.log(
-            "Successfully fetched actual local Club Med Data",
-            pythonData
-          );
-          setLocations(mapPythonDataToReact(pythonData));
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(
-            "Falling back to dummy data due to error: ",
-            err.message
-          );
-          setLocations(CLUBMED_LOCATIONS_DUMMY);
-          setLoading(false);
-        });
-    }
-  }, [locations]);
+    if (data) return;
 
-  return { locations, loading };
+    setLoading(true);
+
+    const queryParams = new URLSearchParams(window.location.search);
+    const resortId = queryParams.get('resort_id');
+
+    const apiUrl = resortId
+      ? `http://localhost:8001/api/clubmed-data?resort_id=${resortId}`
+      : "http://localhost:8001/api/clubmed-data";
+
+    fetch(apiUrl)
+      .then((res) => {
+        if (!res.ok)
+          throw new Error(
+            "Local Dev API failed to answer. Did you run local_dev_api.py?"
+          );
+        return res.json();
+      })
+      .then((apiData) => {
+        console.log("Fetched local dev data:", apiData);
+        setData({
+          view: apiData.view,
+          resort: apiData.resort ? mapPythonDataToReact([apiData.resort])[0] : null,
+          allVillages: mapPythonDataToReact(apiData.allVillages || []),
+        });
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Fallback to dummy data due to error:", err.message);
+        setData({
+          view: "map",
+          resort: null,
+          allVillages: CLUBMED_LOCATIONS_DUMMY,
+        });
+        setLoading(false);
+      });
+  }, [data]);
+
+  return { data, loading };
 }

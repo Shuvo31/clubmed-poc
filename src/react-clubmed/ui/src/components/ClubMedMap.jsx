@@ -14,78 +14,14 @@ const customIcon = new L.DivIcon({
   iconAnchor: [16, 16],
 });
 
-export default function ClubMedMap({ locations, onSelectLocation, isFullscreen, toggleFullscreen }) {
+export default function ClubMedMap({ locations, onSelectLocation }) {
   const mapRef = useRef();
   const carouselRef = useRef();
   const intervalRef = useRef(null);
   const isHoveringRef = useRef(false);
 
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    if (isFullscreen) {
-      document.body.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [isFullscreen]);
-
-  useEffect(() => {
     // Escape logic is now handled implicitly by the browser native fullscreen API and state in App.jsx
-  }, []);
-
-  useEffect(() => {
-    if (!isFullscreen) return;
-
-    // Leaflet needs an explicit resize when its container changes to `position: fixed`.
-    // We run it after the browser paints to ensure the new size is measurable.
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    const tryInvalidate = () => {
-      attempts += 1;
-      const leafletMap = mapRef.current;
-      if (leafletMap?.invalidateSize) {
-        leafletMap.invalidateSize();
-        return;
-      }
-      if (attempts < maxAttempts) window.setTimeout(tryInvalidate, 50);
-    };
-
-    const raf1 = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(tryInvalidate);
-    });
-
-    return () => window.cancelAnimationFrame(raf1);
-  }, [isFullscreen]);
-
-  const startAutoScroll = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    intervalRef.current = setInterval(() => {
-      if (carouselRef.current && !isHoveringRef.current) {
-        const itemWidth = 336;
-
-        // Check if we reached the end
-        if (
-          carouselRef.current.scrollLeft + carouselRef.current.clientWidth >=
-          carouselRef.current.scrollWidth - 10
-        ) {
-          carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          carouselRef.current.scrollBy({ left: itemWidth, behavior: 'smooth' });
-        }
-      }
-    }, 3000); // Auto-scroll every 3 seconds
-  };
-
-  useEffect(() => {
-    startAutoScroll();
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
   }, []);
 
   useEffect(() => {
@@ -128,19 +64,8 @@ export default function ClubMedMap({ locations, onSelectLocation, isFullscreen, 
 
   return (
     <div
-      className={
-        isFullscreen
-          ? "fixed inset-0 z-[2000] w-screen h-screen bg-white"
-          : "relative w-full h-[100vh]"
-      }
+      className="relative w-full h-[100vh]"
     >
-      <button
-        type="button"
-        onClick={toggleFullscreen}
-        className="absolute top-4 right-4 z-[2100] rounded-full bg-white/90 border border-black/10 px-3 py-2 text-[13px] font-extrabold hover:bg-white shadow-sm"
-      >
-        {isFullscreen ? "Exit full screen" : "Full screen"}
-      </button>
       <MapContainer
         center={[30, 0]}
         zoom={3}

@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from copy import deepcopy
 from pathlib import Path
 from typing import Annotated, Any, AsyncIterator, Optional
+from urllib.parse import urlparse, parse_qs
 
 import mcp.types as types
 from mcp.server.fastmcp import Context, FastMCP
@@ -155,20 +156,41 @@ def _load_vendor(filename: str) -> str:
     return (_VENDOR_DIR / filename).read_text(encoding="utf-8")
 
 
-def _generate_village_map_html(villages: list[dict[str, Any]]) -> str:
-    """Reads the bundled Vite single-file HTML and injects the village data."""
+def _generate_village_map_html(
+    villages: list[dict[str, Any]],
+    *,
+    view: str = "map",
+    resort_id: Optional[str] = None,
+) -> str:
+    """
+    Reads the bundled Vite single-file HTML and injects data.
+
+    Args:
+        villages: The list of all village data.
+        view: The view to render ('map' or 'detail').
+        resort_id: The ID of the resort to show in the detail view.
+    """
     dist_path = Path(__file__).parent / "react-clubmed" / "ui" / "dist" / "index.html"
     if not dist_path.exists():
         return f"<h1>Error: React app build not found at {dist_path}</h1><p>Please run 'npm run build' in the react-clubmed/ui directory.</p>"
-    
+
     html = dist_path.read_text(encoding="utf-8")
-    
-    # Inject the real data
-    villages_json = json.dumps(villages, ensure_ascii=False)
-    # The placeholder is: /* CLUBMED_DATA_PLACEHOLDER */null
+
+    # Find the specific resort for the detail view if needed
+    resort_data = None
+    if view == "detail" and resort_id:
+        resort_data = next((v for v in villages if v.get("id") == resort_id), None)
+
+    # Inject the data for the React app
+    injected_data = {
+        "view": view,
+        "allVillages": villages,
+        "resort": resort_data,
+    }
+    data_json = json.dumps(injected_data, ensure_ascii=False)
     placeholder = "/* CLUBMED_DATA_PLACEHOLDER */null"
-    html = html.replace(placeholder, villages_json)
-    
+    html = html.replace(placeholder, data_json)
+
     return html
 
 # ---------------------------------------------------------------------------
@@ -213,13 +235,14 @@ async def lifespan(server: FastMCP) -> AsyncIterator[dict[str, Any]]:
 
     # 3. Enrich and generate widget
     enriched = _enrich_villages(villages, product_index) if villages else []
-    village_map_html = _generate_village_map_html(enriched)
+    # The map HTML is now generated on-demand by the tools
+    # village_map_html = _generate_village_map_html(enriched)
 
     _villages_cache = enriched
-    _widget_html_cache = village_map_html
+    # _widget_html_cache = village_map_html # No longer caching the full HTML
 
     logger.info("Club Med MCP Server starting (HTTP Streamable on 0.0.0.0:8000/mcp)...")
-    yield {"client": client, "villages": enriched, "village_map_html": village_map_html}
+    yield {"client": client, "villages": enriched} # Remove village_map_html
     logger.info("Club Med MCP Server shutting down.")
 
 
@@ -305,6 +328,63 @@ async def get_clubmed_destinations(
 
 
 # ---------------------------------------------------------------------------
+# UI Tool: get_clubmed_map_ui
+# ---------------------------------------------------------------------------
+
+MAP_UI_TOOL_NAME = "get_clubmed_map_ui"
+MAP_UI_RESOURCE_URI = "ui://widget/clubmed-map-ui.html"
+
+
+@mcp.tool(
+    name=MAP_UI_TOOL_NAME,
+    title="Show Club Med Village Map UI",
+    description="Display an interactive map of all Club Med villages worldwide.",
+    meta={
+        "openai/outputTemplate": MAP_UI_RESOURCE_URI,
+        "openai/toolInvocation/invoking": "Loading Club Med village map...",
+        "openai/toolInvocation/invoked": "Club Med village map ready",
+        "openai/widgetAccessible": True,
+    },
+)
+async def get_clubmed_map_ui(ctx: Context) -> str:
+    """Generates and returns the main map view UI."""
+    count = len(ctx.request_context.lifespan_context.get("villages", []))
+    return f"Displaying Club Med village map with {count} villages."
+
+
+# ---------------------------------------------------------------------------
+# UI Tool: get_resort_details_ui
+# ---------------------------------------------------------------------------
+
+DETAILS_UI_TOOL_NAME = "get_resort_details_ui"
+DETAILS_UI_RESOURCE_URI_TEMPLATE = "ui://widget/clubmed-resort-details-ui.html?resort_id={resort_id}"
+
+
+@mcp.tool(
+    name=DETAILS_UI_TOOL_NAME,
+    title="Show Club Med Resort Details UI",
+    description="Display the detailed view for a specific Club Med resort.",
+    meta={
+        "openai/outputTemplate": DETAILS_UI_RESOURCE_URI_TEMPLATE,
+        "openai/toolInvocation/invoking": "Loading resort details...",
+        "openai/toolInvocation/invoked": "Resort details ready",
+        "openai/widgetAccessible": True,
+    },
+)
+async def get_resort_details_ui(
+    ctx: Context,
+    resort_id: Annotated[str, "The unique identifier for the resort (e.g., 'PET')."],
+) -> str:
+    """Generates and returns the resort detail view UI."""
+    villages = ctx.request_context.lifespan_context.get("villages", [])
+    resort = next((v for v in villages if v.get("id") == resort_id), None)
+    if not resort:
+        return f"Error: Resort with ID '{resort_id}' not found."
+    resort_name = resort.get("n", resort_id)
+    return f"Displaying details for {resort_name}."
+
+
+# ---------------------------------------------------------------------------
 # Widget tool + resource: show-clubmed-village-map
 # ---------------------------------------------------------------------------
 
@@ -367,79 +447,72 @@ def _build_widget_resource_template() -> types.ResourceTemplate:
 
 
 def _register_widget_handlers() -> None:
+    """Register handlers for UI tools and resources."""
     server = mcp._mcp_server  # type: ignore[attr-defined]
 
-    _orig_list_tools = server.request_handlers[types.ListToolsRequest]
-
-    async def _list_tools_w(req: types.ListToolsRequest) -> types.ServerResult:
-        orig: types.ServerResult = await _orig_list_tools(req)
-        tools: list[types.Tool] = list(orig.root.tools)  # type: ignore[union-attr]
-        tools.append(_build_widget_tool())
-        return types.ServerResult(types.ListToolsResult(tools=tools))
-
-    server.request_handlers[types.ListToolsRequest] = _list_tools_w
-
-    _orig_call_tool = server.request_handlers[types.CallToolRequest]
-
-    async def _call_tool_w(req: types.CallToolRequest) -> types.ServerResult:
-        if req.params.name != WIDGET_TOOL_NAME:
-            return await _orig_call_tool(req)
-        count = len(_villages_cache)
-        return types.ServerResult(
-            types.CallToolResult(
-                content=[types.TextContent(
-                    type="text",
-                    text=f"Displaying Club Med village map with {count} villages.",
-                )],
-                structuredContent={"villageCount": count},
-                _meta={
-                    "openai/toolInvocation/invoking": _WIDGET_TOOL_META[
-                        "openai/toolInvocation/invoking"
-                    ],
-                    "openai/toolInvocation/invoked": _WIDGET_TOOL_META[
-                        "openai/toolInvocation/invoked"
-                    ],
-                },
-            )
+    # --- Resource Templates ---
+    def _build_map_ui_template() -> types.ResourceTemplate:
+        return types.ResourceTemplate(
+            name="Club Med Map UI",
+            uriTemplate=MAP_UI_RESOURCE_URI,
+            mimeType=WIDGET_MIME_TYPE,
         )
 
-    server.request_handlers[types.CallToolRequest] = _call_tool_w
-
-    async def _list_res(req: types.ListResourcesRequest) -> types.ServerResult:
-        return types.ServerResult(
-            types.ListResourcesResult(resources=[_build_widget_resource()])
+    def _build_details_ui_template() -> types.ResourceTemplate:
+        return types.ResourceTemplate(
+            name="Club Med Resort Details UI",
+            uriTemplate=DETAILS_UI_RESOURCE_URI_TEMPLATE,
+            mimeType=WIDGET_MIME_TYPE,
         )
 
-    server.request_handlers[types.ListResourcesRequest] = _list_res
+    _orig_list_res_tpl = server.request_handlers[types.ListResourceTemplatesRequest]
 
-    async def _list_res_tpl(req: types.ListResourceTemplatesRequest) -> types.ServerResult:
+    async def _list_res_tpl_w(
+        req: types.ListResourceTemplatesRequest,
+    ) -> types.ServerResult:
+        orig_result: types.ServerResult = await _orig_list_res_tpl(req)
+        templates = getattr(orig_result.root, "resourceTemplates", [])
+        templates.extend([_build_map_ui_template(), _build_details_ui_template()])
         return types.ServerResult(
-            types.ListResourceTemplatesResult(
-                resourceTemplates=[_build_widget_resource_template()]
-            )
+            types.ListResourceTemplatesResult(resourceTemplates=templates)
         )
 
-    server.request_handlers[types.ListResourceTemplatesRequest] = _list_res_tpl
+    server.request_handlers[types.ListResourceTemplatesRequest] = _list_res_tpl_w
 
-    async def _read_res(req: types.ReadResourceRequest) -> types.ServerResult:
-        uri_str = str(req.params.uri)
-        if uri_str != WIDGET_RESOURCE_URI:
-            return types.ServerResult(
-                types.ReadResourceResult(contents=[], _meta={"error": f"Unknown: {uri_str}"})
+    # --- Read Resource ---
+    _orig_read_res = server.request_handlers[types.ReadResourceRequest]
+
+    async def _read_res_w(req: types.ReadResourceRequest) -> types.ServerResult:
+        uri = str(req.params.uri)
+        villages = _villages_cache
+
+        html = ""
+        if uri == MAP_UI_RESOURCE_URI:
+            html = _generate_village_map_html(villages, view="map")
+        elif uri.startswith("ui://widget/clubmed-resort-details-ui.html"):
+            # Correctly parse the resort_id from the URI query string
+            parsed_url = urlparse(uri)
+            query_params = parse_qs(parsed_url.query)
+            resort_id = query_params.get("resort_id", [None])[0]
+            html = _generate_village_map_html(
+                villages, view="detail", resort_id=resort_id
             )
-        html = _widget_html_cache or _generate_village_map_html([])
+        else:
+            return await _orig_read_res(req)
+
         return types.ServerResult(
             types.ReadResourceResult(
-                contents=[types.TextResourceContents(
-                    uri=req.params.uri,  # type: ignore[arg-type]
-                    mimeType=WIDGET_MIME_TYPE,
-                    text=html,
-                    _meta=deepcopy(_WIDGET_TOOL_META),
-                )]
+                contents=[
+                    types.TextResourceContents(
+                        uri=req.params.uri,
+                        mimeType=WIDGET_MIME_TYPE,
+                        text=html,
+                    )
+                ]
             )
         )
 
-    server.request_handlers[types.ReadResourceRequest] = _read_res
+    server.request_handlers[types.ReadResourceRequest] = _read_res_w
 
 
 _register_widget_handlers()

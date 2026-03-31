@@ -125,8 +125,14 @@ def _enrich_villages(villages: list[dict], product_index: dict[str, dict]) -> li
     enriched.sort(key=lambda x: (0 if x["img"] else 1, x["n"]))
     return enriched
 
+
 @app.get("/api/clubmed-data")
-async def get_clubmed_data():
+async def get_clubmed_data(resort_id: str = None):
+    """
+    Fetches and returns enriched Club Med village data.
+    If resort_id is provided, returns data for the detail view.
+    Otherwise, returns data for the map view.
+    """
     config = _load_config()
     client = ClubMedClient(
         api_key=config["clubmed_api_key"],
@@ -140,9 +146,22 @@ async def get_clubmed_data():
     # 2. Enrich
     products = await client.get_all_products(limit=50, max_pages=8)
     product_index = _build_product_index(products)
-    enriched = _enrich_villages(villages, product_index) if villages else []
+    enriched = _enrich_villages(villages, product_index)
 
-    return enriched
+    if resort_id:
+        resort_data = next((v for v in enriched if v.get("id") == resort_id), None)
+        return {
+            "view": "detail",
+            "resort": resort_data,
+            "allVillages": enriched,
+        }
+
+    return {
+        "view": "map",
+        "resort": None,
+        "allVillages": enriched,
+    }
+
 
 if __name__ == "__main__":
     import uvicorn

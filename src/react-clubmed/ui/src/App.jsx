@@ -7,45 +7,47 @@ import FamilyResorts from './components/FamilyResorts';
 import { useClubMedData } from './data/locations';
 
 function App() {
-  const { locations, loading } = useClubMedData();
-  const [selectedDest, setSelectedDest] = useState(null);
-
+  const { data, loading } = useClubMedData();
   const appRef = useRef(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      if (appRef.current?.requestFullscreen) {
-        appRef.current.requestFullscreen().catch((err) => {
-          console.warn("Fullscreen blocked by iframe. Opening in new tab instead.", err);
-          window.open(window.location.href, '_blank');
-        });
-      } else {
-        window.open(window.location.href, '_blank');
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-    }
-  };
+  // The view ('map' or 'detail') is now controlled by the data
+  // The selected resort is also directly available from the data
 
   if (loading) {
     return (
       <div className="w-full h-screen flex flex-col items-center justify-center bg-white">
-        <h2 className="text-2xl font-black tracking-tight mb-2">Loading Club Med Destinations...</h2>
-        <p className="text-gray-500">Please make sure the local python API is running via local_dev_api.py</p>
+        <h2 className="text-2xl font-black tracking-tight mb-2">Loading Club Med UI...</h2>
+        <p className="text-gray-500">Preparing resort data...</p>
       </div>
     );
   }
+
+  const handleSelectLocation = (location) => {
+    if (window.mcp) {
+      // In the real MCP environment, call the tool
+      window.mcp.callTool(
+        "get_resort_details_ui",
+        { resort_id: location.id },
+        (response) => {
+          console.log("Tool call response:", response);
+        }
+      );
+    } else {
+      // For local development, simulate the navigation by reloading the page
+      // with the resort_id in the query string.
+      console.warn("MCP context not available. Simulating view change for local dev.");
+      window.location.href = `?resort_id=${location.id}`;
+    }
+  };
+
+  const handleCloseDetails = () => {
+    if (window.mcp) {
+      window.mcp.callTool("get_clubmed_map_ui", {}, console.log);
+    } else {
+      // For local dev, just navigate back to the base URL
+      window.location.search = "";
+    }
+  };
 
   return (
     <div ref={appRef} className="relative w-full h-[100vh]">
@@ -55,27 +57,24 @@ function App() {
             path="/"
             element={
               <>
-                {selectedDest ? (
+                {data?.view === 'detail' && data.resort ? (
                   <ResortDetails
-                    locations={locations}
-                    location={selectedDest}
-                    onClose={() => setSelectedDest(null)}
-                    onSelect={(loc) => setSelectedDest(loc)}
-                    isFullscreen={isFullscreen}
-                    toggleFullscreen={toggleFullscreen}
+                    location={data.resort}
+                    locations={data.allVillages}
+                    onSelect={handleSelectLocation} // Allow selecting other resorts from detail view
+                    onClose={handleCloseDetails}
                   />
                 ) : (
                   <ClubMedMap
-                    locations={locations}
-                    onSelectLocation={(loc) => setSelectedDest(loc)}
-                    isFullscreen={isFullscreen}
-                    toggleFullscreen={toggleFullscreen}
+                    locations={data?.allVillages || []}
+                    onSelectLocation={handleSelectLocation}
                   />
                 )}
               </>
             }
           />
-          <Route path="/family" element={<FamilyResorts locations={locations} onSelectLocation={setSelectedDest} />} />
+          {/* The /family route might need reconsideration in this new model */}
+          <Route path="/family" element={<FamilyResorts locations={data?.allVillages || []} onSelectLocation={handleSelectLocation} />} />
         </Routes>
       </Router>
     </div>
