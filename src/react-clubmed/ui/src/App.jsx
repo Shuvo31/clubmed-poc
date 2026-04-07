@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import ClubMedMap from './components/ClubMedMap';
@@ -10,32 +10,39 @@ function App() {
   const { locations, loading } = useClubMedData();
   const [selectedDest, setSelectedDest] = useState(null);
 
-  const appRef = useRef(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      if (appRef.current?.requestFullscreen) {
-        appRef.current.requestFullscreen().catch((err) => {
-          console.warn("Fullscreen blocked by iframe. Opening in new tab instead.", err);
-          window.open(window.location.href, '_blank');
-        });
-      } else {
-        window.open(window.location.href, '_blank');
+  const requestDisplayMode = async (mode) => {
+    try {
+      if (window.openai?.requestDisplayMode) {
+        await window.openai.requestDisplayMode({ mode });
+        return;
       }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
+    } catch {
+      // Ignore bridge errors and fall through.
     }
+
+    try {
+      if (window.oai?.requestDisplayMode) {
+        await window.oai.requestDisplayMode({ mode });
+      }
+    } catch {
+      // Ignore bridge errors.
+    }
+  };
+
+  const openDetails = (loc) => {
+    setSelectedDest(loc);
+    void requestDisplayMode("fullscreen");
+  };
+
+  const closeDetails = async () => {
+    // Ask host to return to inline before swapping the UI back to map.
+    await requestDisplayMode("inline");
+    setSelectedDest(null);
+
+    // Safety retry for host runtimes that apply mode changes asynchronously.
+    window.setTimeout(() => {
+      void requestDisplayMode("inline");
+    }, 80);
   };
 
   if (loading) {
@@ -48,7 +55,7 @@ function App() {
   }
 
   return (
-    <div ref={appRef} className="relative w-full h-[100vh]">
+    <div className="relative w-full h-[100vh]">
       <Router>
         <Routes>
           <Route
@@ -59,17 +66,13 @@ function App() {
                   <ResortDetails
                     locations={locations}
                     location={selectedDest}
-                    onClose={() => setSelectedDest(null)}
+                    onClose={closeDetails}
                     onSelect={(loc) => setSelectedDest(loc)}
-                    isFullscreen={isFullscreen}
-                    toggleFullscreen={toggleFullscreen}
                   />
                 ) : (
                   <ClubMedMap
                     locations={locations}
-                    onSelectLocation={(loc) => setSelectedDest(loc)}
-                    isFullscreen={isFullscreen}
-                    toggleFullscreen={toggleFullscreen}
+                    onSelectLocation={openDetails}
                   />
                 )}
               </>

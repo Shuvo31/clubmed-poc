@@ -1,9 +1,9 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import SidebarCard from "./SidebarCard";
 import ResortCard from "./ResortCard";
 import ResortDetailContent from "./ResortDetailContent";
 
-function ResortDetails({ locations, location, onClose, onSelect, isFullscreen, toggleFullscreen }) {
+function ResortDetails({ locations, location, onClose, onSelect }) {
   const selectedCardRef = useRef(null);
 
   useEffect(() => {
@@ -16,30 +16,10 @@ function ResortDetails({ locations, location, onClose, onSelect, isFullscreen, t
     }
   }, [location?.id]);
 
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    if (isFullscreen) {
-      document.body.style.overflow = "hidden";
-    }
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [isFullscreen]);
-
-  useEffect(() => {
-    // Escape logic is now handled implicitly by the browser native fullscreen API and state in App.jsx
-  }, []);
-
   if (!location) return null;
 
   return (
-    <div
-      className={
-        isFullscreen
-          ? "fixed inset-0 z-[2000] w-screen h-screen bg-white flex flex-col overflow-hidden font-sans"
-          : "w-full h-[100vh] bg-white flex flex-col overflow-hidden font-sans"
-      }
-    >
+    <div className="w-full h-[100vh] bg-white flex flex-col overflow-hidden font-sans">
       {/* Top Navigation */}
       <header className="flex items-center justify-between px-4 md:px-6 py-4 shrink-0 relative border-b md:border-none border-gray-100">
         <button
@@ -48,15 +28,7 @@ function ResortDetails({ locations, location, onClose, onSelect, isFullscreen, t
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <button
-          type="button"
-          onClick={toggleFullscreen}
-          className="w-10 h-10 md:w-12 md:h-12 rounded-full border border-black flex items-center justify-center hover:bg-gray-100 z-10"
-          aria-label={isFullscreen ? "Exit full screen" : "Full screen"}
-          title={isFullscreen ? "Exit full screen" : "Full screen"}
-        >
-          <span className="text-[13px] font-extrabold">{isFullscreen ? "×" : "⤢"}</span>
-        </button>
+        <div className="w-10 h-10 md:w-12 md:h-12" aria-hidden="true" />
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-xl md:text-2xl font-black flex items-center tracking-tight">
             Club Med <span className="text-2xl md:text-3xl font-serif font-medium leading-none ml-1 -mt-1">ψ</span>
